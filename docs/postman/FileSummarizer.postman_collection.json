@@ -1,0 +1,100 @@
+{
+	"info": {
+		"_postman_id": "42bbc0d7-0643-476b-bbb4-9334b7d5e1df",
+		"name": "FileSummarizer",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "42730438"
+	},
+	"item": [
+		{
+			"name": "summarize",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{FileSummarizerBaseurl}}/summarize?file_name=FileSumarizer_SampleContent.rtf",
+					"host": [
+						"{{FileSummarizerBaseurl}}"
+					],
+					"path": [
+						"summarize"
+					],
+					"query": [
+						{
+							"key": "file_name",
+							"value": "FileSumarizer_SampleContent.rtf"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "ask",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/Users/gokulthangavel/Downloads/FileSummarizer_SampleContent.rtf"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{FileSummarizerBaseurl}}/ask?file_name=FileSumarizer_SampleContent.rtf&question=what is timer traversal? answer in two lines.",
+					"host": [
+						"{{FileSummarizerBaseurl}}"
+					],
+					"path": [
+						"ask"
+					],
+					"query": [
+						{
+							"key": "file_name",
+							"value": "FileSumarizer_SampleContent.rtf"
+						},
+						{
+							"key": "question",
+							"value": "what is timer traversal? answer in two lines."
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "upload-file",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/Users/gokulthangavel/Downloads/FileSummarizer_SampleContent.rtf"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{FileSummarizerBaseurl}}/upload-file",
+					"host": [
+						"{{FileSummarizerBaseurl}}"
+					],
+					"path": [
+						"upload-file"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
