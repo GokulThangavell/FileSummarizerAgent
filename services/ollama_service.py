@@ -3,12 +3,12 @@ from sentence_transformers import SentenceTransformer
 from qdrant_client.models import VectorParams
 from fastapi import UploadFile
 import PyPDF2
-import nltk
-from nltk.tokenize import sent_tokenize
+#from nltk.tokenize import sent_tokenize
 import uuid
 import ollama
+import re
 
-qdrant_client = QdrantClient("localhost", "6333")
+qdrant_client = QdrantClient("localhost", port=6333)
 embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
 
 collection_name = "summarize_collection"
@@ -19,12 +19,26 @@ if not qdrant_client.collection_exists(collection_name):
         vectors_config=VectorParams(size=384, distance="Cosine")
     )
 
-def extract_text_from_file(file):
-    reader = PyPDF2.PdfReader(file)
-    return " ".join(page.extract_text() for page in reader.pages)
+async def extract_text_from_file(file):
+    if file.filename.endswith(".pdf"):
+        reader = PyPDF2.PdfReader(file) 
+        return " ".join(page.extract_text() for page in reader.pages)
+    else:
+        return (await file.read()).decode("utf-8")
 
-def get_sentence_chunks(text):
-    sentences = sent_tokenize(text)
+async def get_sentences(text:str):
+    sentences = []
+
+    #using nltk
+    #sentences = sent_tokenize(text)
+
+    sentences = re.split(r'(?<=[.!?]) +', text)
+
+    return sentences
+
+
+async def get_sentence_chunks(text):
+    sentences =await get_sentences(text)
     chunks = []
     current_chunk = ""
     for sentence in sentences:
@@ -40,8 +54,8 @@ def get_sentence_chunks(text):
 
 
 async def upload_doc(file:UploadFile):
-    text = extract_text_from_file(file) if file.filename.endswith(".pdf") else (await file.read()).decode("utf-8")
-    sentence_chunks = get_sentence_chunks(text)
+    text = await extract_text_from_file(file) 
+    sentence_chunks = await get_sentence_chunks(text)
     vectors = embedding_model.encode(sentence_chunks).tolist()
     points = [{
         "id":str(uuid.uuid4()),
@@ -61,7 +75,7 @@ async def summarize(file_name:str):
                                    , scroll_filter={"must":[{"key":"file", "match":{"value":file_name}}]})
     chunks = [p.payload["chunk"] for p in results[0]]
     combined_text = "\n".join(chunks)
-    response = ollama.chat(model="mistral", message=[{"role":"user", "content":f"Summarize the following text:\n{combined_text}"}])
+    response = ollama.chat(model="mistral", messages=[{"role":"user", "content":f"Summarize the following text:\n{combined_text}"}])
     return {"summary":response["message"]["content"]}
 
 async def ask(file_name:str, question:str):
@@ -71,7 +85,7 @@ async def ask(file_name:str, question:str):
                                    , limit = 5
                                    , query_filter={"must":[{"key":"file", "match":{"value":file_name}}]})
     context ="\n".join([r.payload("chunk") for r in results])
-    response = ollama.chat(model="mistral", message=[{"role":"user", "content":f"Answer the question based on this context:\n{context}\nQuestion:{question}"}])
+    response = ollama.chat(model="mistral", messages=[{"role":"user", "content":f"Answer the question based on this context:\n{context}\nQuestion:{question}"}])
     return{"answer":response["message"]["content"]}
 
 
